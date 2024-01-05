@@ -29,7 +29,7 @@ function Footer(props: any) {
         <div className="w-full m-5 flex items-center justify-center">
           <img alt="" src={LogoImage} className="w-7 h-7" />
           <h1 className="text-center ml-4 text-white font-sans text-lg font-bold">
-            Youtube Video Downloader+
+            Youtube Audio Downloader+
           </h1>
         </div>
 
