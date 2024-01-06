@@ -12,9 +12,8 @@ import ReactPlayer from "react-player";
 import axios from "axios";
 import { Root } from "../extras/types";
 
-const defUrl = "https://youtu.be/P-z3aLhp9w4?si=7Z8powxCY5o0TswE";
-const API_BASE_URL = `http://localhost:3003/extras/v1/api/youtube/download-audio?videoUrl=`;
-const BASE_API = "http://localhost:3003/";
+const API_BASE_URL = `http://192.168.1.88:3003/extras/v1/api/youtube/download-audio?videoUrl=`;
+var static_video_url = "";
 
 const sampleResponse: Root = {
   message: "success",
@@ -166,10 +165,8 @@ const sampleResponse: Root = {
 function HomePage(props: any) {
   const [videoUrl, setVideoUrl] = useState("");
   const [audioResponse, setAudioResponse] = useState<Root>(sampleResponse);
-  const [downloadUrl, setDownloadUrl] = useState("");
   const [playVideo, setPlayVideo] = useState(false);
   const [isTermsAggred, setIsTermsAggred] = useState(true);
-  const [downloadTitle, setDownloadTitle] = useState("");
   const [isDownloadSuccess, setIsDownloadSuccess] = useState(false);
   const [open, setOpen] = React.useState(false);
 
@@ -189,21 +186,36 @@ function HomePage(props: any) {
     console.info(videoUrl);
     if (videoUrl !== "" || videoUrl.includes("youtu")) {
       setPlayVideo(true);
+    } else {
+      setPlayVideo(false);
     }
   }
 
-  function pingBackendServer(): void {
-    axios.get(BASE_API).then(
-      (result) => {
-        console.log("Hitting Youtube Dpwnload API is successful");
-        console.log(result.data);
-        alert(`Hitting Youtube Dpwnload API is successful ${result.data}`);
-      },
-      (error) => {
-        console.log("Something went wrong while hitting data.." + error);
-        alert("Something went wrong(cvv) while hitting data.." + error);
-      }
-    );
+  function mimicDownload() {
+    if (!isTermsAggred) {
+      alert("Please Agree with our Terms & Condition before procedding..");
+      return;
+    }
+
+    if (videoUrl === "" || !videoUrl.startsWith("https://youtu")) {
+      alert("A Valid Youtube Video URL is Required!!");
+      return;
+    }
+
+    handleOpen();
+    setAudioResponse(sampleResponse);
+    setIsDownloadSuccess(true);
+    setPlayVideo(true);
+    static_video_url = videoUrl;
+    setTimeout(() => {
+      handleClose();
+      setVideoUrl("");
+    }, 5000);
+  }
+
+  function handleCheckboxChange(checked: boolean) {
+    setIsTermsAggred(checked);
+    //setPlayVideo(checked);
   }
 
   function fetchDownloadableLink(): void {
@@ -221,13 +233,14 @@ function HomePage(props: any) {
     axios.post(API_BASE_URL + videoUrl).then(
       (result) => {
         console.log("Hitting Youtube Dpwnload API is successful");
-        console.log(result.data);
-        console.log(`df : ${result.data.downloadableFormats[0].url}`);
         setAudioResponse(result.data);
         setIsDownloadSuccess(true);
-        setVideoUrl("");
         setPlayVideo(true);
-        handleClose();
+        static_video_url = videoUrl;
+        setTimeout(() => {
+          handleClose();
+          setVideoUrl("");
+        }, 5000);
       },
       (error) => {
         console.log("Something went wrong while hitting data.." + error);
@@ -242,6 +255,7 @@ function HomePage(props: any) {
       alert("A Valid Youtube Video URL is Required!!");
       return;
     }
+    static_video_url = videoUrl;
     setPlayVideo(true);
   }
 
@@ -283,7 +297,7 @@ function HomePage(props: any) {
           variant="outlined"
         />
         <Button
-          onClick={pingBackendServer}
+          onClick={fetchDownloadableLink}
           sx={{ marginTop: "20px", marginBottom: "10px", width: "200px" }}
           variant="contained"
         >
@@ -302,7 +316,7 @@ function HomePage(props: any) {
         </h3>
         <div className="flex items-center justify-center">
           <Checkbox
-            onChange={(e) => setIsTermsAggred(e.target.checked)}
+            onChange={(e) => handleCheckboxChange(e.target.checked)}
             defaultChecked
           />
           <h3 className="text-xs text-center m-2">
@@ -352,17 +366,17 @@ function HomePage(props: any) {
         </div>
       )}
 
-      <div className="w-full sm:w-50px lg:w-1/2 mt-10 mb-10">
-        {playVideo && (
+      {playVideo && (
+        <div className="w-full sm:w-50px lg:w-1/2 mt-10 mb-10">
           <ReactPlayer
             width="100%"
             controls={true}
             pip={true}
             volume={1}
-            url={videoUrl}
+            url={static_video_url}
           />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
